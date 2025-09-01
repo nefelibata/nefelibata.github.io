@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>阶梯计价问题计算工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <script> 
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    colors: { 
+                        primary: '#3b82f6', 
+                        secondary: '#10b981', 
+                        accent: '#6366f1', 
+                        neutral: '#f3f4f6', 
+                        'neutral-dark': '#e5e7eb' 
+                    }, 
+                    fontFamily: { 
+                        sans: ['Inter', 'system-ui', 'sans-serif'] 
+                    } 
+                } 
+            } 
+        } 
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities { 
+            .shadow-custom { box-shadow: 0 4px 20px rgba(0,0,0,0.08); } 
+            .transition-custom { transition: all 0.3s ease; } 
+            .tab-active { 
+                border-bottom: 2px solid #3b82f6; 
+                color: #3b82f6; 
+                font-weight: 500; 
+            }
+        } 
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <header class="text-center mb-10">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-gray-800 mb-3">阶梯计价问题计算工具</h1>
+        </header>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 左侧：阶梯规则 -->
+            <div class="bg-white rounded-xl shadow-custom p-6">
+                <h2 class="text-xl font-semibold mb-4"><i class="fa fa-list-alt text-primary mr-2"></i>阶梯计费规则</h2>
+                <p class="text-gray-600 text-sm mb-5">点击表格可修改范围和单价</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border-collapse">
+                        <thead>
+                            <tr class="bg-neutral text-left">
+                                <th class="px-4 py-3 text-sm font-medium">阶梯</th>
+                                <th class="px-4 py-3 text-sm font-medium">用水量范围 (m³)</th>
+                                <th class="px-4 py-3 text-sm font-medium">单价 (元/m³)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tariff-table-body">
+                            <!-- 表格内容动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-5 flex justify-between">
+                    <button id="add-tier"
+                        class="flex items-center text-sm bg-primary/10 text-primary px-3 py-2 rounded-lg hover:bg-primary/20 transition-custom">
+                        <i class="fa fa-plus mr-1"></i> 添加阶梯
+                    </button>
+                    <button id="reset-tier"
+                        class="flex items-center text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-custom">
+                        <i class="fa fa-refresh mr-1"></i> 重置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧：双向计算功能 -->
+            <div class="bg-white rounded-xl shadow-custom p-6">
+                <h2 class="text-xl font-semibold mb-4"><i class="fa fa-calculator text-primary mr-2"></i>阶梯费用计算</h2>
+                
+                <!-- 计算模式切换标签 -->
+                <div class="flex border-b border-gray-200 mb-6">
+                    <button id="tab-usage-to-fee" class="tab-btn py-2 px-4 text-sm tab-active transition-custom">
+                        用水量 → 总水费
+                    </button>
+                    <button id="tab-fee-to-usage" class="tab-btn py-2 px-4 text-sm text-gray-600 hover:text-primary transition-custom">
+                        总水费 → 用水量
+                    </button>
+                </div>
+                
+                <!-- 模式1：用水量计算总水费 -->
+                <div id="panel-usage-to-fee" class="calc-panel block">
+                    <label for="water-usage" class="block text-sm font-medium text-gray-700 mb-1">用水量 (m³)</label>
+                    <div class="flex mb-6">
+                        <input id="water-usage" type="number" min="0" step="1" placeholder="请输入用水量"
+                            class="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-custom">
+                        <button id="calc-fee-btn"
+                            class="bg-primary text-white px-4 py-2 rounded-r-lg hover:bg-primary/90 transition-custom">
+                            计算水费
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 模式2：总水费计算用水量（新增） -->
+                <div id="panel-fee-to-usage" class="calc-panel hidden">
+                    <label for="total-fee-input" class="block text-sm font-medium text-gray-700 mb-1">总水费 (元)</label>
+                    <div class="flex mb-6">
+                        <input id="total-fee-input" type="number" min="0" step="0.01" placeholder="请输入总水费"
+                            class="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-custom">
+                        <button id="calc-usage-btn"
+                            class="bg-primary text-white px-4 py-2 rounded-r-lg hover:bg-primary/90 transition-custom">
+                            计算水量
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 结果展示区域 -->
+                <div id="result-container" class="hidden">
+                    <div class="bg-neutral rounded-lg p-4 mb-4">
+                        <h3 class="font-medium mb-2">计算结果</h3>
+                        <div class="flex items-end gap-2">
+                            <span id="result-value" class="text-2xl font-bold text-primary">0</span>
+                            <span id="result-unit" class="text-gray-600">元</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-medium mb-2">计算过程</h3>
+                        <div id="calculation-process"
+                            class="bg-neutral rounded-lg p-4 text-sm text-gray-700 space-y-1.5 max-h-40 overflow-y-auto">
+                            <!-- 计算过程动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="mt-8 bg-white rounded-xl shadow-custom p-6">
+            <h3 class="text-lg font-semibold mb-3 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2"></i>使用说明
+            </h3>
+            <ul class="list-disc pl-5 text-gray-700 space-y-2 text-sm">
+                <li>阶梯规则修改：点击表格中的数值可直接编辑用水量范围和单价，系统自动校验合理性</li>
+                <li>双向计算：支持“用水量算水费”和“水费算用水量”两种模式，点击顶部标签切换</li>
+                <li>阶梯管理：可添加新阶梯（点击“添加阶梯”）或恢复默认规则（点击“重置”）</li>
+                <li>计算过程：结果展示区将详细列出每一步的计算逻辑，帮助理解阶梯计价原理</li>
+            </ul>
+        </div>
+    </div>
+
+    <script> 
+        // 初始阶梯数据（默认3阶梯）
+        let tiers = [
+            { id: 1, min: 0, max: 180, price: 4.5 },
+            { id: 2, min: 181, max: 240, price: 6 },
+            { id: 3, min: 241, max: Infinity, price: 8 }
+        ];
+        
+        // DOM元素缓存
+        const tariffTableBody = document.getElementById("tariff-table-body");
+        const addTierBtn = document.getElementById("add-tier");
+        const resetTierBtn = document.getElementById("reset-tier");
+        const waterUsageInput = document.getElementById("water-usage");
+        const totalFeeInput = document.getElementById("total-fee-input");
+        const calcFeeBtn = document.getElementById("calc-fee-btn");
+        const calcUsageBtn = document.getElementById("calc-usage-btn");
+        const resultContainer = document.getElementById("result-container");
+        const resultValue = document.getElementById("result-value");
+        const resultUnit = document.getElementById("result-unit");
+        const calculationProcess = document.getElementById("calculation-process");
+        const tabUsageToFee = document.getElementById("tab-usage-to-fee");
+        const tabFeeToUsage = document.getElementById("tab-fee-to-usage");
+        const panelUsageToFee = document.getElementById("panel-usage-to-fee");
+        const panelFeeToUsage = document.getElementById("panel-fee-to-usage");
+
+        // 1. 渲染阶梯规则表格
+        function renderTariffTable() {
+            tariffTableBody.innerHTML = "";
+            
+            tiers.forEach((tier, index) => {
+                const row = document.createElement("tr");
+                row.className = "border-b border-gray-100 hover:bg-gray-50 transition-custom";
+                
+                // 阶梯编号
+                const tierCell = document.createElement("td");
+                tierCell.className = "px-4 py-3";
+                tierCell.textContent = `第${tier.id}阶梯`;
+                row.appendChild(tierCell);
+                
+                // 用水量范围（可编辑）
+                const rangeCell = document.createElement("td");
+                rangeCell.className = "px-4 py-3";
+                
+                const rangeWrap = document.createElement("div");
+                rangeWrap.className = "flex items-center gap-1.5";
+                
+                // 最小水量输入框
+                const minInput = document.createElement("input");
+                minInput.type = "number";
+                minInput.min = 0;
+                minInput.value = tier.min;
+                minInput.className = "w-16 border border-gray-200 rounded px-2 py-1 text-center text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none";
+                minInput.dataset.type = "min";
+                minInput.dataset.index = index;
+                
+                // 范围分隔符
+                const separator = document.createElement("span");
+                separator.textContent = "~";
+                separator.className = "text-gray-500";
+                
+                // 最大水量输入框（支持"以上"文本）
+                const maxInput = document.createElement("input");
+                maxInput.type = tier.max === Infinity ? "text" : "number";
+                maxInput.min = 0;
+                maxInput.value = tier.max === Infinity ? "以上" : tier.max;
+                maxInput.className = "w-16 border border-gray-200 rounded px-2 py-1 text-center text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none";
+                maxInput.dataset.type = "max";
+                maxInput.dataset.index = index;
+                
+                rangeWrap.append(minInput, separator, maxInput);
+                rangeCell.appendChild(rangeWrap);
+                row.appendChild(rangeCell);
+                
+                // 单价输入框
+                const priceCell = document.createElement("td");
+                priceCell.className = "px-4 py-3";
+                
+                const priceInput = document.createElement("input");
+                priceInput.type = "number";
+                priceInput.min = 0;
+                priceInput.step = 0.1;
+                priceInput.value = tier.price;
+                priceInput.className = "w-16 border border-gray-200 rounded px-2 py-1 text-center text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none";
+                priceInput.dataset.type = "price";
+                priceInput.dataset.index = index;
+                
+                priceCell.appendChild(priceInput);
+                row.appendChild(priceCell);
+                
+                // 删除按钮（至少保留1个阶梯）
+                if (tiers.length > 1) {
+                    const actionCell = document.createElement("td");
+                    actionCell.className = "px-4 py-3 text-center";
+                    
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.className = "text-red-500 hover:text-red-700 transition-custom";
+                    deleteBtn.innerHTML = '<i class="fa fa-trash-o"></i>';
+                    deleteBtn.dataset.index = index;
+                    
+                    actionCell.appendChild(deleteBtn);
+                    row.appendChild(actionCell);
+                }
+                
+                tariffTableBody.appendChild(row);
+            });
+            
+            // 绑定输入框修改事件
+            bindTierInputEvents();
+            // 绑定删除按钮事件
+            bindDeleteTierEvents();
+        }
+
+        // 2. 绑定阶梯规则修改事件
+        function bindTierInputEvents() {
+            document.querySelectorAll("#tariff-table-body input").forEach(input => {
+                input.addEventListener("change", (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    const type = e.target.dataset.type;
+                    const value = e.target.value.trim();
+                    
+                    // 处理最小值/最大值修改
+                    if (type === "min" || type === "max") {
+                        // 最大值支持"以上"文本
+                        if (type === "max" && value === "以上") {
+                            tiers[index].max = Infinity;
+                            return;
+                        }
+                        
+                        // 数值验证
+                        const numValue = parseInt(value);
+                        if (isNaN(numValue) || numValue < 0) {
+                            alert(`请输入有效的${type === "min" ? "最小" : "最大"}用水量`);
+                            e.target.value = tiers[index][type] === Infinity ? "以上" : tiers[index][type];
+                            return;
+                        }
+                        
+                        // 阶梯范围合理性校验
+                        if (!validateTierRange(index, type, numValue)) {
+                            e.target.value = tiers[index][type] === Infinity ? "以上" : tiers[index][type];
+                            return;
+                        }
+                        
+                        tiers[index][type] = numValue;
+                    } 
+                    // 处理单价修改
+                    else if (type === "price") {
+                        const numValue = parseFloat(value);
+                        if (isNaN(numValue) || numValue < 0) {
+                            alert("请输入有效的单价（非负数）");
+                            e.target.value = tiers[index].price;
+                            return;
+                        }
+                        tiers[index].price = numValue;
+                    }
+                });
+            });
+        }
+
+        // 3. 阶梯范围合理性校验
+        function validateTierRange(index, type, value) {
+            // 校验当前阶梯最小值 > 上一阶梯最大值
+            if (type === "min" && index > 0) {
+                const prevTierMax = tiers[index - 1].max;
+                if (value <= prevTierMax) {
+                    alert(`第${index + 1}阶梯最小值（${value}）需大于第${index}阶梯最大值（${prevTierMax}）`);
+                    return false;
+                }
+            }
+            
+            // 校验当前阶梯最大值 < 下一阶梯最小值
+            if (type === "max" && index < tiers.length - 1) {
+                const nextTierMin = tiers[index + 1].min;
+                if (value >= nextTierMin) {
+                    alert(`第${index + 1}阶梯最大值（${value}）需小于第${index + 2}阶梯最小值（${nextTierMin}）`);
+                    return false;
+                }
+            }
+            
+            // 校验最小值 < 最大值（非最后阶梯）
+            if (type === "min" && tiers[index].max !== Infinity && value >= tiers[index].max) {
+                alert(`第${index + 1}阶梯最小值（${value}）需小于最大值（${tiers[index].max}）`);
+                return false;
+            }
+            if (type === "max" && value <= tiers[index].min) {
+                alert(`第${index + 1}阶梯最大值（${value}）需大于最小值（${tiers[index].min}）`);
+                return false;
+            }
+            
+            return true;
+        }
+
+        // 4. 绑定删除阶梯事件
+        function bindDeleteTierEvents() {
+            document.querySelectorAll("#tariff-table-body button").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    const index = parseInt(e.target.closest("button").dataset.index);
+                    tiers.splice(index, 1);
+                    // 重新编号
+                    tiers.forEach((tier, i) => tier.id = i + 1);
+                    renderTariffTable();
+                });
+            });
+        }
+
+        // 5. 添加新阶梯
+        function addNewTier() {
+            const lastTier = tiers[tiers.length - 1];
+            // 计算新阶梯最小值（基于最后阶梯的最大值）
+            const newMin = lastTier.max === Infinity ? lastTier.min + 100 : lastTier.max + 1;
+            
+            tiers.push({
+                id: tiers.length + 1,
+                min: newMin,
+                max: Infinity,
+                price: 10 // 默认单价
+            });
+            
+            renderTariffTable();
+        }
+
+        // 6. 重置阶梯规则
+        function resetTiers() {
+            tiers = [
+                { id: 1, min: 0, max: 180, price: 4.5 },
+                { id: 2, min: 181, max: 240, price: 6 },
+                { id: 3, min: 241, max: Infinity, price: 8 }
+            ];
+            renderTariffTable();
+        }
+
+        // 7. 计算模式切换
+        function switchCalcMode(mode) {
+            if (mode === "usage-to-fee") {
+                // 切换到"用水量→水费"模式
+                tabUsageToFee.classList.add("tab-active");
+                tabFeeToUsage.classList.remove("tab-active");
+                panelUsageToFee.classList.remove("hidden");
+                panelFeeToUsage.classList.add("hidden");
+                resultUnit.textContent = "元";
+            } else {
+                // 切换到"水费→用水量"模式
+                tabFeeToUsage.classList.add("tab-active");
+                tabUsageToFee.classList.remove("tab-active");
+                panelFeeToUsage.classList.remove("hidden");
+                panelUsageToFee.classList.add("hidden");
+                resultUnit.textContent = "m³";
+            }
+            // 隐藏结果区
+            resultContainer.classList.add("hidden");
+        }
+
+        // 8. 正向计算：用水量 → 总水费
+        function calculateFeeFromUsage(usage) {
+            if (usage <= 0) return { total: 0, steps: ["用水量为0，水费为0元"] };
+            
+            let totalFee = 0;
+            const steps = [];
+            
+            tiers.forEach(tier => {
+                let usedInTier = 0;
+                let tmpMin = 0;
+                if (tier.min != 0) {
+                    tmpMin = tier.min - 1;
+                }
+                // 计算当前阶梯的用水量
+                if (usage > tmpMin) {
+                    if (tier.max === Infinity) {
+                        // 最后阶梯：全部超出部分
+                        usedInTier = usage - tmpMin;
+                    } else {
+                        // 中间阶梯：取"超出部分"和"阶梯上限"的较小值
+                        usedInTier = Math.min(usage - tmpMin, tier.max - tmpMin ) ;
+                    }
+                }
+                
+                if (usedInTier > 0) {
+                    const feeInTier = usedInTier * tier.price;
+                    totalFee += feeInTier;
+                    // 记录计算步骤
+                    const rangeText = tier.max === Infinity 
+                        ? `${tier.min}m³以上` 
+                        : `${tier.min}~${tier.max}m³`;
+                    steps.push(`${rangeText}：${usedInTier}m³ × ${tier.price}元/m³ = ${feeInTier.toFixed(2)}元`);
+                }
+            });
+            
+            // 添加总计步骤
+            steps.push(`总水费：${steps.map(s => s.split("=")[1].trim()).join(" + ")} = ${totalFee.toFixed(2)}元`);
+            
+            return { total: totalFee, steps };
+        }
+
+        // 9. 反向计算：总水费 → 用水量（新增核心功能）
+        function calculateUsageFromFee(totalFee) {
+            if (totalFee <= 0) return { usage: 0, steps: ["总水费为0，用水量为0m³"] };
+            
+            let remainingFee = totalFee;
+            let totalUsage = 0;
+            const steps = [];
+            
+            for (let i = 0; i < tiers.length; i++) {
+                const tier = tiers[i];
+                let tmpMin = 0;
+                if (tier.min != 0) {
+                    tmpMin = tier.min - 1;
+                } 
+                const tierMaxUsage = tier.max === Infinity ? Infinity : tier.max - tmpMin;
+                const tierMaxFee = tierMaxUsage * tier.price; // 当前阶梯最大费用
+                
+                if (remainingFee <= tierMaxFee) {
+                    // 费用在当前阶梯内：计算对应用水量
+                    const usedInTier = remainingFee / tier.price;
+                    totalUsage += usedInTier;
+                    
+                    // 记录步骤
+                    const rangeText = tier.max === Infinity 
+                        ? `${tier.min}m³以上` 
+                        : `${tier.min}~${tier.max}m³`;
+                    steps.push(`${rangeText}：${remainingFee.toFixed(2)}元 ÷ ${tier.price}元/m³ = ${usedInTier.toFixed(2)}m³`);
+                    remainingFee = 0;
+                    break;
+                } else {
+                    // 费用超出当前阶梯：用完当前阶梯全部水量
+                    totalUsage += tierMaxUsage;
+                    remainingFee -= tierMaxFee;
+                    
+                    // 记录步骤
+                    const rangeText = tier.max === Infinity 
+                        ? `${tier.min}m³以上` 
+                        : `${tier.min}~${tier.max}m³`;
+                    steps.push(`${rangeText}：全额使用${tierMaxUsage}m³，费用${tierMaxFee.toFixed(2)}元，剩余${remainingFee.toFixed(2)}元`);
+                }
+            }
+            
+            // 处理极端情况：费用超出所有阶梯（理论上不会发生，最后阶梯为无限大）
+            if (remainingFee > 0 && tiers.length > 0) {
+                const lastTier = tiers[tiers.length - 1];
+                const extraUsage = remainingFee / lastTier.price;
+                totalUsage += extraUsage;
+                steps.push(`超出阶梯部分：${remainingFee.toFixed(2)}元 ÷ ${lastTier.price}元/m³ = ${extraUsage.toFixed(2)}m³`);
+            }
+            
+            // 添加总计步骤
+            steps.push(`总用水量：${totalUsage.toFixed(2)}m³`);
+            
+            return { usage: totalUsage, steps };
+        }
+
+        // 10. 处理正向计算（用水量→水费）
+        function handleCalcFee() {
+            const usage = parseFloat(waterUsageInput.value);
+            // 输入验证
+            if (isNaN(usage) || usage < 0) {
+                alert("请输入有效的用水量（非负数字）");
+                waterUsageInput.focus();
+                return;
+            }
+            
+            // 计算并展示结果
+            const result = calculateFeeFromUsage(usage);
+            showResult(result.total.toFixed(2), "元", result.steps);
+        }
+
+        // 11. 处理反向计算（水费→用水量）
+        function handleCalcUsage() {
+            const totalFee = parseFloat(totalFeeInput.value);
+            // 输入验证
+            if (isNaN(totalFee) || totalFee < 0) {
+                alert("请输入有效的总水费（非负数字）");
+                totalFeeInput.focus();
+                return;
+            }
+            
+            // 计算并展示结果
+            const result = calculateUsageFromFee(totalFee);
+            showResult(result.usage.toFixed(2), "m³", result.steps);
+        }
+
+        // 12. 展示计算结果和过程
+        function showResult(value, unit, steps) {
+            resultContainer.classList.remove("hidden");
+            resultValue.textContent = value;
+            resultUnit.textContent = unit;
+            
+            // 渲染计算过程
+            calculationProcess.innerHTML = "";
+            steps.forEach(step => {
+                const stepEl = document.createElement("p");
+                stepEl.className = "leading-relaxed";
+                stepEl.textContent = step;
+                calculationProcess.appendChild(stepEl);
+            });
+        }
+
+        // 13. 初始化事件绑定
+        function initEvents() {
+            // 阶梯管理事件
+            addTierBtn.addEventListener("click", addNewTier);
+            resetTierBtn.addEventListener("click", resetTiers);
+            
+            // 计算模式切换事件
+            tabUsageToFee.addEventListener("click", () => switchCalcMode("usage-to-fee"));
+            tabFeeToUsage.addEventListener("click", () => switchCalcMode("fee-to-usage"));
+            
+            // 计算按钮事件
+            calcFeeBtn.addEventListener("click", handleCalcFee);
+            calcUsageBtn.addEventListener("click", handleCalcUsage);
+            
+            // 回车键触发计算
+            waterUsageInput.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") handleCalcFee();
+            });
+            totalFeeInput.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") handleCalcUsage();
+            });
+        }
+
+        // 页面加载完成初始化
+        document.addEventListener("DOMContentLoaded", () => {
+            renderTariffTable();
+            initEvents();
+        });
+    </script>
+</body>
+
+</html>
