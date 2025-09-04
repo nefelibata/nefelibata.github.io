@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节水小管家模拟器</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f9fc;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #1a5fb4;
+            border-bottom: 2px solid #1a5fb4;
+            padding-bottom: 10px;
+        }
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .input-section {
+            background-color: #e8f4f8;
+        }
+        .result-section {
+            background-color: #f0f8e8;
+        }
+        .tips-section {
+            background-color: #fff8e1;
+        }
+        h2 {
+            color: #2c6bae;
+            margin-top: 0;
+        }
+        h3 {
+            color: #4a7db6;
+            margin: 15px 0 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #2c6bae;
+            color: white;
+        }
+        .input-cell {
+            background-color: #fffacd;
+            width: 60px;
+            text-align: center;
+            border: 1px solid #ffd700;
+            border-radius: 3px;
+            padding: 5px;
+        }
+        .usage-cell {
+            background-color: #e8f5e9;
+            font-weight: bold;
+        }
+        .result-cell {
+            background-color: #e8f5e9;
+            font-weight: bold;
+        }
+        .calc-btn {
+            background-color: #2c6bae;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 15px 0;
+            transition: background-color 0.3s;
+            display: block;
+            margin: 20px auto;
+        }
+        .calc-btn:hover {
+            background-color: #1a5fb4;
+        }
+        .tips {
+            background-color: #e3f2fd;
+            padding: 12px;
+            border-left: 4px solid #1a5fb4;
+            margin: 8px 0;
+            border-radius: 3px;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .input-label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💧 节水小管家模拟器</h1>
+        <p>通过计算家庭用水量和费用，学习节水知识，培养环保意识</p>
+    </div>
+
+    <div class="section input-section">
+        <h2>第一步：请输入您家的情况</h2>
+        
+        <div>
+            <span class="input-label">家庭人口数（人）：</span>
+            <input type="number" id="familyMembers" min="1" max="10" value="3" class="input-cell">
+        </div>
+
+        <h3>第二步：请填写您的用水习惯（每月）</h3>
+        <table id="waterUsageTable">
+            <thead>
+                <tr>
+                    <th>用水项目</th>
+                    <th>每次用水量(L)</th>
+                    <th>每月次数</th>
+                    <th>月用水量(m³)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>刷牙（不关水龙头）</td>
+                    <td><input type="number" class="input-cell usage-amount" value="30" min="0" step="1"></td>
+                    <td><input type="number" class="input-cell usage-count" value="60" min="0" step="1"></td>
+                    <td class="monthly-usage usage-cell">1.80</td>
+                </tr>
+                <tr>
+                    <td>洗澡（淋浴10分钟）</td>
+                    <td><input type="number" class="input-cell usage-amount" value="120" min="0" step="5"></td>
+                    <td><input type="number" class="input-cell usage-count" value="30" min="0" step="1"></td>
+                    <td class="monthly-usage usage-cell">3.60</td>
+                </tr>
+                <tr>
+                    <td>洗衣机（全自动）</td>
+                    <td><input type="number" class="input-cell usage-amount" value="70" min="0" step="5"></td>
+                    <td><input type="number" class="input-cell usage-count" value="12" min="0" step="1"></td>
+                    <td class="monthly-usage usage-cell">0.84</td>
+                </tr>
+                <tr>
+                    <td>马桶（冲水一次）</td>
+                    <td><input type="number" class="input-cell usage-amount" value="6" min="0" step="1"></td>
+                    <td><input type="number" class="input-cell usage-count" value="150" min="0" step="5"></td>
+                    <td class="monthly-usage usage-cell">0.90</td>
+                </tr>
+                <tr>
+                    <td>做饭、洗菜</td>
+                    <td><input type="number" class="input-cell usage-amount" value="20" min="0" step="2"></td>
+                    <td><input type="number" class="input-cell usage-count" value="90" min="0" step="5"></td>
+                    <td class="monthly-usage usage-cell">1.80</td>
+                </tr>
+                <tr>
+                    <td>其他用水</td>
+                    <td><input type="number" class="input-cell usage-amount" value="15" min="0" step="2"></td>
+                    <td><input type="number" class="input-cell usage-count" value="30" min="0" step="5"></td>
+                    <td class="monthly-usage usage-cell">0.45</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3"><strong>总月用水量 (m³)</strong></td>
+                    <td id="totalWaterUsage" class="usage-cell"><strong>9.39</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <button class="calc-btn" onclick="calculateWaterCost()">计算水费</button>
+
+    <div class="section result-section">
+        <h2>第三步：水费计算结果</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>阶梯</th>
+                    <th>用水量范围 (m³)</th>
+                    <th>单价 (元/m³)</th>
+                    <th>水费 (元)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>第一阶梯</td>
+                    <td>0 - 人均5m³</td>
+                    <td>4.5</td>
+                    <td id="firstTierCost" class="result-cell">40.50</td>
+                </tr>
+                <tr>
+                    <td>第二阶梯</td>
+                    <td>人均5.1m³ - 20m³</td>
+                    <td>6</td>
+                    <td id="secondTierCost" class="result-cell">20.34</td>
+                </tr>
+                <tr>
+                    <td>第三阶梯</td>
+                    <td>人均20.1m³以上</td>
+                    <td>8</td>
+                    <td id="thirdTierCost" class="result-cell">0.00</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3"><strong>总水费：</strong></td>
+                    <td id="totalCost" class="result-cell"><strong>60.84</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="section tips-section">
+        <h2>第四步：您的节水小贴士</h2>
+        <div id="waterSavingTips">
+            <div class="tips">· 您的家庭具有良好的节水习惯，请继续保持！</div>
+        </div>
+    </div>
+
+    <script>
+        // 计算每月用水量
+        function calculateMonthlyUsage() {
+            const usageAmounts = document.querySelectorAll('.usage-amount');
+            const usageCounts = document.querySelectorAll('.usage-count');
+            const usageCells = document.querySelectorAll('.monthly-usage');
+            
+            let totalUsage = 0;
+            
+            usageAmounts.forEach((amountInput, index) => {
+                const usagePerTime = parseFloat(amountInput.value) || 0;
+                const times = parseFloat(usageCounts[index].value) || 0;
+                const monthlyUsage = (usagePerTime * times) / 1000;
+                
+                usageCells[index].textContent = monthlyUsage.toFixed(2);
+                totalUsage += monthlyUsage;
+            });
+            
+            document.getElementById('totalWaterUsage').innerHTML = '<strong>' + totalUsage.toFixed(2) + '</strong>';
+            return totalUsage;
+        }
+
+        // 计算水费
+        function calculateWaterCost() {
+            const members = parseInt(document.getElementById('familyMembers').value) || 3;
+            const totalUsage = calculateMonthlyUsage();
+            
+            const firstTierLimit = members * 5;
+            const secondTierLimit = members * 20;
+            
+            let firstTierCost = 0;
+            let secondTierCost = 0;
+            let thirdTierCost = 0;
+            
+            if (totalUsage <= firstTierLimit) {
+                firstTierCost = totalUsage * 4.5;
+            } else {
+                firstTierCost = firstTierLimit * 4.5;
+                
+                if (totalUsage <= secondTierLimit) {
+                    secondTierCost = (totalUsage - firstTierLimit) * 6;
+                } else {
+                    secondTierCost = (secondTierLimit - firstTierLimit) * 6;
+                    thirdTierCost = (totalUsage - secondTierLimit) * 8;
+                }
+            }
+            
+            const totalCost = firstTierCost + secondTierCost + thirdTierCost;
+            
+            document.getElementById('firstTierCost').textContent = firstTierCost.toFixed(2);
+            document.getElementById('secondTierCost').textContent = secondTierCost.toFixed(2);
+            document.getElementById('thirdTierCost').textContent = thirdTierCost.toFixed(2);
+            document.getElementById('totalCost').innerHTML = '<strong>' + totalCost.toFixed(2) + '</strong>';
+            
+            generateWaterSavingTips(totalUsage, members);
+        }
+
+        // 生成节水建议
+        function generateWaterSavingTips(totalUsage, members) {
+            const tipsContainer = document.getElementById('waterSavingTips');
+            tipsContainer.innerHTML = '';
+            
+            const perPersonUsage = totalUsage / members;
+            const usageAmounts = document.querySelectorAll('.usage-amount');
+            const usageCounts = document.querySelectorAll('.usage-count');
+            
+            // 刷牙建议
+            const brushAmount = parseFloat(usageAmounts[0].value) || 0;
+            const brushTimes = parseFloat(usageCounts[0].value) || 0;
+            if (brushAmount > 25) {
+                const tip = document.createElement('div');
+                tip.className = 'tips';
+                tip.textContent = '· 刷牙时请关紧水龙头，可将每次用水量从' + brushAmount + 'L减少到6L，每月可节水约' + ((brushAmount-6) * brushTimes / 1000).toFixed(1) + 'm³。';
+                tipsContainer.appendChild(tip);
+            }
+            
+            // 洗澡建议
+            const showerAmount = parseFloat(usageAmounts[1].value) || 0;
+            const showerTimes = parseFloat(usageCounts[1].value) || 0;
+            if (showerAmount > 100) {
+                const tip = document.createElement('div');
+                tip.className = 'tips';
+                tip.textContent = '· 使用节水花洒或将洗澡时间缩短，可将每次用水量从' + showerAmount + 'L减少到80L，每月可节水约' + ((showerAmount-80) * showerTimes / 1000).toFixed(1) + 'm³。';
+                tipsContainer.appendChild(tip);
+            }
+            
+            // 洗衣机建议
+            const washAmount = parseFloat(usageAmounts[2].value) || 0;
+            const washTimes = parseFloat(usageCounts[2].value) || 0;
+            if (washTimes > 10 && washAmount > 50) {
+                const tip = document.createElement('div');
+                tip.className = 'tips';
+                tip.textContent = '· 洗衣机尽量满负荷运行，减少使用次数，可选择节水模式。';
+                tipsContainer.appendChild(tip);
+            }
+            
+            // 马桶建议
+            const toiletAmount = parseFloat(usageAmounts[3].value) || 0;
+            if (toiletAmount > 6) {
+                const tip = document.createElement('div');
+                tip.className = 'tips';
+                tip.textContent = '· 考虑使用节水型马桶，每次冲水可节省' + (toiletAmount - 6) + 'L水。';
+                tipsContainer.appendChild(tip);
+            }
+            
+            // 总体评价
+            const overallTip = document.createElement('div');
+            overallTip.className = 'tips';
+            
+            if (perPersonUsage > 6) {
+                overallTip.textContent = '· 您的家庭人均用水量较高（' + perPersonUsage.toFixed(2) + 'm³/人），请检查是否有漏水或浪费现象。建议检查水龙头是否关紧，减少不必要的用水。';
+            } else if (perPersonUsage > 4) {
+                overallTip.textContent = '· 您的家庭用水量适中（' + perPersonUsage.toFixed(2) + 'm³/人），仍有节水空间。可以考虑使用节水器具，减少冲洗时间。';
+            } else {
+                overallTip.textContent = '· 您的家庭具有良好的节水习惯（' + perPersonUsage.toFixed(2) + 'm³/人），请继续保持！您为保护水资源做出了贡献。';
+            }
+            
+            tipsContainer.appendChild(overallTip);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为所有输入框添加变化监听
+            const allInputs = document.querySelectorAll('input');
+            allInputs.forEach(input => {
+                input.addEventListener('input', calculateWaterCost);
+            });
+            
+            // 初始计算一次
+            calculateWaterCost();
+        });
+    </script>
+</body>
+</html>
