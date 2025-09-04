@@ -106,6 +106,16 @@
             font-weight: bold;
             margin-right: 10px;
         }
+        .radio-group {
+            margin: 10px 0;
+            display: flex;
+            gap: 20px;
+        }
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
@@ -116,6 +126,17 @@
 
     <div class="section input-section">
         <h2>第一步：请输入您家的情况</h2>
+        
+        <div class="radio-group">
+            <div class="radio-item">
+                <input type="radio" id="oneHousehold" name="waterType" value="oneHousehold" checked>
+                <label for="oneHousehold">一户一表</label>
+            </div>
+            <div class="radio-item">
+                <input type="radio" id="collective" name="waterType" value="collective">
+                <label for="collective">集体表</label>
+            </div>
+        </div>
         
         <div>
             <span class="input-label">家庭人口数（人）：</span>
@@ -195,27 +216,27 @@
             <tbody>
                 <tr>
                     <td>第一阶梯</td>
-                    <td>0 - 人均5m³</td>
-                    <td>4.5</td>
-                    <td id="firstTierCost" class="result-cell">40.50</td>
+                    <td id="firstTierRange">0 - 32</td>
+                    <td>2.69</td>
+                    <td id="firstTierCost" class="result-cell">25.26</td>
                 </tr>
                 <tr>
                     <td>第二阶梯</td>
-                    <td>人均5.1m³ - 20m³</td>
-                    <td>6</td>
-                    <td id="secondTierCost" class="result-cell">20.34</td>
+                    <td id="secondTierRange">32.1 - 48</td>
+                    <td>3.42</td>
+                    <td id="secondTierCost" class="result-cell">0.00</td>
                 </tr>
                 <tr>
                     <td>第三阶梯</td>
-                    <td>人均20.1m³以上</td>
-                    <td>8</td>
+                    <td id="thirdTierRange">48.1以上</td>
+                    <td>4.14</td>
                     <td id="thirdTierCost" class="result-cell">0.00</td>
                 </tr>
             </tbody>
             <tfoot>
                 <tr>
                     <td colspan="3"><strong>总水费：</strong></td>
-                    <td id="totalCost" class="result-cell"><strong>60.84</strong></td>
+                    <td id="totalCost" class="result-cell"><strong>25.26</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -254,33 +275,68 @@
         function calculateWaterCost() {
             const members = parseInt(document.getElementById('familyMembers').value) || 3;
             const totalUsage = calculateMonthlyUsage();
+            const isOneHousehold = document.getElementById('oneHousehold').checked;
             
-            const firstTierLimit = members * 5;
-            const secondTierLimit = members * 20;
+            let firstTierLimit, secondTierLimit;
+            let firstTierPrice = 2.69;
+            let secondTierPrice = 3.42;
+            let thirdTierPrice = 4.14;
             
-            let firstTierCost = 0;
-            let secondTierCost = 0;
-            let thirdTierCost = 0;
-            
-            if (totalUsage <= firstTierLimit) {
-                firstTierCost = totalUsage * 4.5;
-            } else {
-                firstTierCost = firstTierLimit * 4.5;
+            // 集体表不实行阶梯水价
+            if (!isOneHousehold) {
+                // 更新表格显示
+                document.getElementById('firstTierRange').textContent = "所有用水量";
+                document.getElementById('secondTierRange').textContent = "-";
+                document.getElementById('thirdTierRange').textContent = "-";
                 
-                if (totalUsage <= secondTierLimit) {
-                    secondTierCost = (totalUsage - firstTierLimit) * 6;
+                // 计算费用
+                const totalCost = totalUsage * firstTierPrice;
+                
+                document.getElementById('firstTierCost').textContent = totalCost.toFixed(2);
+                document.getElementById('secondTierCost').textContent = "0.00";
+                document.getElementById('thirdTierCost').textContent = "0.00";
+                document.getElementById('totalCost').innerHTML = '<strong>' + totalCost.toFixed(2) + '</strong>';
+            } else {
+                // 一户一表的阶梯计算
+                if (members <= 4) {
+                    firstTierLimit = 32;
+                    secondTierLimit = 48;
+                    document.getElementById('firstTierRange').textContent = "0 - 32";
+                    document.getElementById('secondTierRange').textContent = "32.1 - 48";
+                    document.getElementById('thirdTierRange').textContent = "48.1以上";
                 } else {
-                    secondTierCost = (secondTierLimit - firstTierLimit) * 6;
-                    thirdTierCost = (totalUsage - secondTierLimit) * 8;
+                    // 超过4人，按人数计算阶梯
+                    firstTierLimit = 8 * members;
+                    secondTierLimit = 12 * members;
+                    document.getElementById('firstTierRange').textContent = `0 - ${firstTierLimit}`;
+                    document.getElementById('secondTierRange').textContent = `${firstTierLimit + 0.1} - ${secondTierLimit}`;
+                    document.getElementById('thirdTierRange').textContent = `${secondTierLimit + 0.1}以上`;
                 }
+                
+                let firstTierCost = 0;
+                let secondTierCost = 0;
+                let thirdTierCost = 0;
+                
+                if (totalUsage <= firstTierLimit) {
+                    firstTierCost = totalUsage * firstTierPrice;
+                } else {
+                    firstTierCost = firstTierLimit * firstTierPrice;
+                    
+                    if (totalUsage <= secondTierLimit) {
+                        secondTierCost = (totalUsage - firstTierLimit) * secondTierPrice;
+                    } else {
+                        secondTierCost = (secondTierLimit - firstTierLimit) * secondTierPrice;
+                        thirdTierCost = (totalUsage - secondTierLimit) * thirdTierPrice;
+                    }
+                }
+                
+                const totalCost = firstTierCost + secondTierCost + thirdTierCost;
+                
+                document.getElementById('firstTierCost').textContent = firstTierCost.toFixed(2);
+                document.getElementById('secondTierCost').textContent = secondTierCost.toFixed(2);
+                document.getElementById('thirdTierCost').textContent = thirdTierCost.toFixed(2);
+                document.getElementById('totalCost').innerHTML = '<strong>' + totalCost.toFixed(2) + '</strong>';
             }
-            
-            const totalCost = firstTierCost + secondTierCost + thirdTierCost;
-            
-            document.getElementById('firstTierCost').textContent = firstTierCost.toFixed(2);
-            document.getElementById('secondTierCost').textContent = secondTierCost.toFixed(2);
-            document.getElementById('thirdTierCost').textContent = thirdTierCost.toFixed(2);
-            document.getElementById('totalCost').innerHTML = '<strong>' + totalCost.toFixed(2) + '</strong>';
             
             generateWaterSavingTips(totalUsage, members);
         }
