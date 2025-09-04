@@ -53,7 +53,7 @@
                         <thead>
                             <tr class="bg-neutral text-left">
                                 <th class="px-4 py-3 text-sm font-medium">阶梯</th>
-                                <th class="px-4 py-3 text-sm font-medium">用水量范围 (m³)</th>
+                                <th class="px-4 py-3 text-sm font-medium">用量范围 (m³)</th>
                                 <th class="px-4 py-3 text-sm font-medium">单价 (元/m³)</th>
                             </tr>
                         </thead>
@@ -81,35 +81,35 @@
                 <!-- 计算模式切换标签 -->
                 <div class="flex border-b border-gray-200 mb-6">
                     <button id="tab-usage-to-fee" class="tab-btn py-2 px-4 text-sm tab-active transition-custom">
-                        用水量 → 总水费
+                        用量 → 总费用
                     </button>
                     <button id="tab-fee-to-usage" class="tab-btn py-2 px-4 text-sm text-gray-600 hover:text-primary transition-custom">
-                        总水费 → 用水量
+                        总费用 → 用量
                     </button>
                 </div>
                 
-                <!-- 模式1：用水量计算总水费 -->
+                <!-- 模式1：用量计算总费用 -->
                 <div id="panel-usage-to-fee" class="calc-panel block">
-                    <label for="water-usage" class="block text-sm font-medium text-gray-700 mb-1">用水量 (m³)</label>
+                    <label for="water-usage" class="block text-sm font-medium text-gray-700 mb-1">用量 (m³)</label>
                     <div class="flex mb-6">
-                        <input id="water-usage" type="number" min="0" step="1" placeholder="请输入用水量"
+                        <input id="water-usage" type="number" min="0" step="1" placeholder="请输入用量"
                             class="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-custom">
                         <button id="calc-fee-btn"
                             class="bg-primary text-white px-4 py-2 rounded-r-lg hover:bg-primary/90 transition-custom">
-                            计算水费
+                            计算费用
                         </button>
                     </div>
                 </div>
                 
-                <!-- 模式2：总水费计算用水量（新增） -->
+                <!-- 模式2：总费用计算用量（新增） -->
                 <div id="panel-fee-to-usage" class="calc-panel hidden">
-                    <label for="total-fee-input" class="block text-sm font-medium text-gray-700 mb-1">总水费 (元)</label>
+                    <label for="total-fee-input" class="block text-sm font-medium text-gray-700 mb-1">总费用 (元)</label>
                     <div class="flex mb-6">
-                        <input id="total-fee-input" type="number" min="0" step="0.01" placeholder="请输入总水费"
+                        <input id="total-fee-input" type="number" min="0" step="0.01" placeholder="请输入总费用"
                             class="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-custom">
                         <button id="calc-usage-btn"
                             class="bg-primary text-white px-4 py-2 rounded-r-lg hover:bg-primary/90 transition-custom">
-                            计算水量
+                            计算用量
                         </button>
                     </div>
                 </div>
@@ -141,8 +141,8 @@
                 <i class="fa fa-info-circle text-primary mr-2"></i>使用说明
             </h3>
             <ul class="list-disc pl-5 text-gray-700 space-y-2 text-sm">
-                <li>阶梯规则修改：点击表格中的数值可直接编辑用水量范围和单价，系统自动校验合理性</li>
-                <li>双向计算：支持“用水量算水费”和“水费算用水量”两种模式，点击顶部标签切换</li>
+                <li>阶梯规则修改：点击表格中的数值可直接编辑用量范围和单价，系统自动校验合理性</li>
+                <li>双向计算：支持“用量算费用”和“费用算用量”两种模式，点击顶部标签切换</li>
                 <li>阶梯管理：可添加新阶梯（点击“添加阶梯”）或恢复默认规则（点击“重置”）</li>
                 <li>计算过程：结果展示区将详细列出每一步的计算逻辑，帮助理解阶梯计价原理</li>
             </ul>
@@ -188,7 +188,7 @@
                 tierCell.textContent = `第${tier.id}阶梯`;
                 row.appendChild(tierCell);
                 
-                // 用水量范围（可编辑）
+                // 用量范围（可编辑）
                 const rangeCell = document.createElement("td");
                 rangeCell.className = "px-4 py-3";
                 
@@ -280,7 +280,7 @@
                         // 数值验证
                         const numValue = parseInt(value);
                         if (isNaN(numValue) || numValue < 0) {
-                            alert(`请输入有效的${type === "min" ? "最小" : "最大"}用水量`);
+                            alert(`请输入有效的${type === "min" ? "最小" : "最大"}用量`);
                             e.target.value = tiers[index][type] === Infinity ? "以上" : tiers[index][type];
                             return;
                         }
@@ -382,14 +382,14 @@
         // 7. 计算模式切换
         function switchCalcMode(mode) {
             if (mode === "usage-to-fee") {
-                // 切换到"用水量→水费"模式
+                // 切换到"用量→费用"模式
                 tabUsageToFee.classList.add("tab-active");
                 tabFeeToUsage.classList.remove("tab-active");
                 panelUsageToFee.classList.remove("hidden");
                 panelFeeToUsage.classList.add("hidden");
                 resultUnit.textContent = "元";
             } else {
-                // 切换到"水费→用水量"模式
+                // 切换到"费用→用量"模式
                 tabFeeToUsage.classList.add("tab-active");
                 tabUsageToFee.classList.remove("tab-active");
                 panelFeeToUsage.classList.remove("hidden");
@@ -400,9 +400,9 @@
             resultContainer.classList.add("hidden");
         }
 
-        // 8. 正向计算：用水量 → 总水费
+        // 8. 正向计算：用量 → 总费用
         function calculateFeeFromUsage(usage) {
-            if (usage <= 0) return { total: 0, steps: ["用水量为0，水费为0元"] };
+            if (usage <= 0) return { total: 0, steps: ["用量为0，费用为0元"] };
             
             let totalFee = 0;
             const steps = [];
@@ -413,7 +413,7 @@
                 if (tier.min != 0) {
                     tmpMin = tier.min - 1;
                 }
-                // 计算当前阶梯的用水量
+                // 计算当前阶梯的用量
                 if (usage > tmpMin) {
                     if (tier.max === Infinity) {
                         // 最后阶梯：全部超出部分
@@ -436,14 +436,14 @@
             });
             
             // 添加总计步骤
-            steps.push(`总水费：${steps.map(s => s.split("=")[1].trim()).join(" + ")} = ${totalFee.toFixed(2)}元`);
+            steps.push(`总费用：${steps.map(s => s.split("=")[1].trim()).join(" + ")} = ${totalFee.toFixed(2)}元`);
             
             return { total: totalFee, steps };
         }
 
-        // 9. 反向计算：总水费 → 用水量（新增核心功能）
+        // 9. 反向计算：总费用 → 用量（新增核心功能）
         function calculateUsageFromFee(totalFee) {
-            if (totalFee <= 0) return { usage: 0, steps: ["总水费为0，用水量为0m³"] };
+            if (totalFee <= 0) return { usage: 0, steps: ["总费用为0，用量为0m³"] };
             
             let remainingFee = totalFee;
             let totalUsage = 0;
@@ -459,7 +459,7 @@
                 const tierMaxFee = tierMaxUsage * tier.price; // 当前阶梯最大费用
                 
                 if (remainingFee <= tierMaxFee) {
-                    // 费用在当前阶梯内：计算对应用水量
+                    // 费用在当前阶梯内：计算对应用量
                     const usedInTier = remainingFee / tier.price;
                     totalUsage += usedInTier;
                     
@@ -492,17 +492,17 @@
             }
             
             // 添加总计步骤
-            steps.push(`总用水量：${totalUsage.toFixed(2)}m³`);
+            steps.push(`总用量：${totalUsage.toFixed(2)}m³`);
             
             return { usage: totalUsage, steps };
         }
 
-        // 10. 处理正向计算（用水量→水费）
+        // 10. 处理正向计算（用量→费用）
         function handleCalcFee() {
             const usage = parseFloat(waterUsageInput.value);
             // 输入验证
             if (isNaN(usage) || usage < 0) {
-                alert("请输入有效的用水量（非负数字）");
+                alert("请输入有效的用量（非负数字）");
                 waterUsageInput.focus();
                 return;
             }
@@ -512,12 +512,12 @@
             showResult(result.total.toFixed(2), "元", result.steps);
         }
 
-        // 11. 处理反向计算（水费→用水量）
+        // 11. 处理反向计算（费用→用量）
         function handleCalcUsage() {
             const totalFee = parseFloat(totalFeeInput.value);
             // 输入验证
             if (isNaN(totalFee) || totalFee < 0) {
-                alert("请输入有效的总水费（非负数字）");
+                alert("请输入有效的总费用（非负数字）");
                 totalFeeInput.focus();
                 return;
             }
