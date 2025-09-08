@@ -121,7 +121,7 @@
 <body>
     <div class="header">
         <h1>💧 节水小管家模拟器</h1>
-        <p>通过计算家庭用水量和费用，学习节水知识，培养环保意识</p>
+        <p>根据南宁市居民用水阶梯计价规则，计算家庭用水费用</p>
     </div>
 
     <div class="section input-section">
@@ -216,20 +216,20 @@
             <tbody>
                 <tr>
                     <td>第一阶梯</td>
-                    <td id="firstTierRange">0 - 32</td>
+                    <td id="firstTierRange">0 - 35</td>
                     <td>2.69</td>
                     <td id="firstTierCost" class="result-cell">25.26</td>
                 </tr>
                 <tr>
                     <td>第二阶梯</td>
-                    <td id="secondTierRange">32.1 - 48</td>
+                    <td id="secondTierRange">35.1 - 50</td>
                     <td>3.42</td>
                     <td id="secondTierCost" class="result-cell">0.00</td>
                 </tr>
                 <tr>
                     <td>第三阶梯</td>
-                    <td id="thirdTierRange">48.1以上</td>
-                    <td>4.14</td>
+                    <td id="thirdTierRange">50.1以上</td>
+                    <td>5.59</td>
                     <td id="thirdTierCost" class="result-cell">0.00</td>
                 </tr>
             </tbody>
@@ -278,9 +278,10 @@
             const isOneHousehold = document.getElementById('oneHousehold').checked;
             
             let firstTierLimit, secondTierLimit;
+            // 根据南宁市居民用水阶梯计价规则设置单价
             let firstTierPrice = 2.69;
             let secondTierPrice = 3.42;
-            let thirdTierPrice = 4.14;
+            let thirdTierPrice = 5.59;
             
             // 集体表不实行阶梯水价
             if (!isOneHousehold) {
@@ -298,16 +299,19 @@
                 document.getElementById('totalCost').innerHTML = '<strong>' + totalCost.toFixed(2) + '</strong>';
             } else {
                 // 一户一表的阶梯计算
-                if (members <= 4) {
-                    firstTierLimit = 32;
-                    secondTierLimit = 48;
-                    document.getElementById('firstTierRange').textContent = "0 - 32";
-                    document.getElementById('secondTierRange').textContent = "32.1 - 48";
-                    document.getElementById('thirdTierRange').textContent = "48.1以上";
+                // 根据南宁市规则，5人及以下家庭的基础阶梯
+                if (members <= 5) {
+                    firstTierLimit = 35;
+                    secondTierLimit = 50;
+                    document.getElementById('firstTierRange').textContent = "0 - 35";
+                    document.getElementById('secondTierRange').textContent = "35.1 - 50";
+                    document.getElementById('thirdTierRange').textContent = "50.1以上";
                 } else {
-                    // 超过4人，按人数计算阶梯
-                    firstTierLimit = 8 * members;
-                    secondTierLimit = 12 * members;
+                    // 超过5人，每增加一人调整阶梯
+                    // 每增加一人，第一档增加7立方米，第二档增加10立方米
+                    const extraMembers = members - 5;
+                    firstTierLimit = 35 + 7 * extraMembers;
+                    secondTierLimit = 50 + 10 * extraMembers;
                     document.getElementById('firstTierRange').textContent = `0 - ${firstTierLimit}`;
                     document.getElementById('secondTierRange').textContent = `${firstTierLimit + 0.1} - ${secondTierLimit}`;
                     document.getElementById('thirdTierRange').textContent = `${secondTierLimit + 0.1}以上`;
